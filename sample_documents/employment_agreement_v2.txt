@@ -1,0 +1,167 @@
+EMPLOYMENT AGREEMENT (REVISED VERSION)
+
+This Employment Agreement ("Agreement") is entered into as of March 1, 2026 ("Effective Date"), by and between:
+
+EMPLOYER: Meridian Technologies Pvt. Ltd., a company incorporated under the laws of India, with its registered office at 42 Tech Park Road, Bengaluru, Karnataka 560001 ("Company" or "Employer")
+
+AND
+
+EMPLOYEE: Arjun Sharma, residing at 15 Green Valley Apartments, Koramangala, Bengaluru, Karnataka 560034 ("Employee")
+
+WHEREAS, the Company desires to employ the Employee, and the Employee desires to accept employment with the Company, on the revised terms and conditions set forth herein.
+
+---
+
+SECTION 1 – TERM OF EMPLOYMENT
+
+1.1 The Company hereby employs the Employee, and the Employee hereby accepts employment with the Company, commencing on March 1, 2026 (the "Start Date").
+
+1.2 The initial term of this Agreement shall be twenty-four (24) months, ending on February 28, 2028 (the "Initial Term"), unless earlier terminated in accordance with the provisions of this Agreement.
+
+1.3 Following the Initial Term, this Agreement shall automatically renew for successive one-year periods unless either party provides written notice of non-renewal at least sixty (60) days prior to the end of the then-current term.
+
+---
+
+SECTION 2 – POSITION AND DUTIES
+
+2.1 The Employee shall be employed in the position of Lead Software Engineer and shall perform such duties and responsibilities as are customarily associated with that position, and such other duties as may be assigned by the Company from time to time.
+
+2.2 The Employee shall devote their full working time, attention, and effort to the performance of their duties under this Agreement.
+
+2.3 The Employee shall comply with all Company policies, rules, and regulations, as may be amended from time to time.
+
+2.4 The Employee shall not, without the prior written consent of the Company, engage in any other employment, consulting, or business activity during the term of this Agreement.
+
+---
+
+SECTION 3 – COMPENSATION
+
+3.1 Base Salary. The Company shall pay the Employee a base salary of INR 24,00,000 (Rupees Twenty-Four Lakhs) per annum, payable in equal monthly installments on the last working day of each calendar month.
+
+3.2 Performance Bonus. The Employee shall be eligible for an annual performance bonus of up to 25% of base salary, subject to the achievement of performance objectives as determined by the Company at its discretion.
+
+3.3 Salary Review. The Company shall review the Employee's compensation annually. Any adjustment shall be at the Company's sole discretion.
+
+3.4 Deductions. All payments shall be subject to applicable taxes, withholdings, and statutory deductions.
+
+---
+
+SECTION 4 – BENEFITS
+
+4.1 The Employee shall be entitled to participate in any employee benefit plans offered by the Company, including health insurance, provident fund, and gratuity, subject to the terms and conditions of such plans.
+
+4.2 The Employee shall be entitled to twenty (20) days of paid annual leave per calendar year, to be taken at times mutually agreed upon with the Company.
+
+4.3 The Employee shall be entitled to sick leave in accordance with applicable law and Company policy.
+
+---
+
+SECTION 5 – TERM AND AUTOMATIC RENEWAL
+
+5.1 This Agreement shall continue in force for the Initial Term and, unless terminated, shall automatically renew as described in Section 1.3.
+
+5.2 NOTICE OF NON-RENEWAL: Either party wishing to terminate this Agreement at the end of any Term must provide written notice of non-renewal no less than sixty (60) days before the expiration of the then-current term. Failure to provide timely notice will result in automatic renewal of this Agreement for a further twelve (12) month period.
+
+---
+
+SECTION 6 – CONFIDENTIALITY
+
+6.1 The Employee acknowledges that, in the course of employment, the Employee will have access to Confidential Information of the Company. "Confidential Information" means any and all information, in whatever form or medium, relating to the Company's business, operations, products, services, clients, financial information, technology, trade secrets, intellectual property, strategies, methodologies, pricing, or any other proprietary or non-public information.
+
+6.2 The Employee shall hold all Confidential Information in strict confidence and shall not, during or after the term of this Agreement, directly or indirectly disclose, publish, or otherwise reveal any Confidential Information to any third party without the prior written consent of the Company.
+
+6.3 Upon termination of this Agreement for any reason, the Employee shall immediately return to the Company all documents, data, records, and other materials containing or constituting Confidential Information.
+
+6.4 The obligations under this Section 6 shall survive termination of this Agreement without limitation as to time, and shall extend to all subsidiaries and affiliates of the Company.
+
+---
+
+SECTION 7 – INTELLECTUAL PROPERTY
+
+7.1 Assignment. The Employee hereby irrevocably assigns to the Company all right, title, and interest in and to any and all inventions, discoveries, developments, improvements, software, code, works of authorship, and other intellectual property created, conceived, developed, or reduced to practice by the Employee, either alone or jointly with others, at any time during the term of this Agreement, whether or not during working hours, that:
+(a) relate to the Company's current or reasonably anticipated business, research, or development;
+(b) are created using Company equipment, supplies, facilities, or Confidential Information; or
+(c) result from work performed by the Employee for the Company; or
+(d) are related to any technology or product area in which the Company is engaged or is exploring.
+
+7.2 The Employee agrees to execute any documents, and take such additional actions, as the Company may request in order to give effect to this assignment, at the Company's cost.
+
+7.3 The Employee represents and warrants that the Employee has no pre-existing obligations that would conflict with this Agreement.
+
+---
+
+SECTION 8 – TERMINATION
+
+8.1 Termination by Either Party. Either party may terminate this Agreement by providing sixty (60) days' prior written notice to the other party.
+
+8.2 Termination for Cause. The Company may terminate this Agreement immediately without notice in the event of:
+(a) Material breach by the Employee of any provision of this Agreement;
+(b) Serious misconduct, dishonesty, fraud, or willful neglect of duties;
+(c) Conviction of a criminal offense;
+(d) Violation of Company data security or information security policies.
+
+8.3 Upon termination for any reason, the Employee shall immediately:
+(a) Return all Company property, including but not limited to devices, documents, access credentials, and proprietary materials;
+(b) Cooperate with the transition of responsibilities;
+(c) Comply with all post-termination obligations under this Agreement.
+
+8.4 The Company shall pay all accrued salary and applicable statutory entitlements up to the effective date of termination.
+
+8.5 Garden Leave. The Company may, at its discretion, place the Employee on garden leave during all or part of any notice period, during which the Employee shall remain bound by all obligations under this Agreement.
+
+---
+
+SECTION 9 – POST-TERMINATION RESTRICTIONS
+
+9.1 Non-Compete. For a period of twelve (12) months following termination of this Agreement for any reason, the Employee shall not, within India or any country where the Company conducts business, directly or indirectly engage in, be employed by, or provide services to any business that competes with the Company's core software products or services.
+
+9.2 Non-Solicitation of Employees. For a period of twenty-four (24) months following termination of this Agreement, the Employee shall not, directly or indirectly, solicit, recruit, or induce any employee or contractor of the Company to leave the Company's employment or engagement.
+
+9.3 Non-Solicitation of Clients. For a period of eighteen (18) months following termination, the Employee shall not solicit, contact, or attempt to divert any client or prospective client of the Company with whom the Employee had dealings during the last thirty-six (36) months of employment.
+
+---
+
+SECTION 10 – LIQUIDATED DAMAGES
+
+10.1 The parties acknowledge that a breach of Sections 6 or 9 would cause irreparable harm to the Company that would be difficult to quantify. Accordingly, in the event of a material breach of Section 6 (Confidentiality) or Section 9 (Post-Termination Restrictions), the Employee shall pay to the Company liquidated damages in the amount of INR 25,00,000 (Rupees Twenty-Five Lakhs), which the parties agree represents a genuine pre-estimate of the Company's losses.
+
+---
+
+SECTION 11 – DISPUTE RESOLUTION
+
+11.1 Negotiation. In the event of any dispute, the parties shall first attempt to resolve it through good-faith negotiation.
+
+11.2 Arbitration. If not resolved within thirty (30) days, the dispute shall be submitted to binding arbitration under the rules of the Indian Council of Arbitration, with the seat in Bengaluru. The language shall be English.
+
+11.3 Governing Law. This Agreement shall be governed by the laws of India. The courts of Bengaluru shall have exclusive jurisdiction.
+
+---
+
+SECTION 12 – GENERAL PROVISIONS
+
+12.1 Entire Agreement. This Agreement supersedes all prior agreements.
+
+12.2 Amendment. Only by written instrument signed by both parties.
+
+12.3 Waiver. Must be in writing.
+
+12.4 Severability. Remaining provisions continue if one is unenforceable.
+
+12.5 Assignment. Employee may not assign. Company may assign to any successor.
+
+12.6 Notices. In writing by email or courier.
+
+---
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.
+
+MERIDIAN TECHNOLOGIES PVT. LTD.
+
+By: Priya Venkataraman
+Title: Chief Executive Officer
+Date: March 1, 2026
+
+EMPLOYEE
+
+By: Arjun Sharma
+Date: March 1, 2026
