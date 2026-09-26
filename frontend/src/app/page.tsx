@@ -40,14 +40,14 @@ export default function Home() {
       setDocuments(res.documents);
 
       if (autoSelectId) {
-        setSelectedDocId(autoSelectId);
-      } else if (!selectedDocId && res.documents.length > 0) {
-        setSelectedDocId(res.documents[0].id);
+        setSelectedDocId((current) => current ?? autoSelectId);
+      } else if (res.documents.length > 0) {
+        setSelectedDocId((current) => current ?? res.documents[0].id);
       }
     } catch (err) {
       console.error('Failed to fetch documents:', err);
     }
-  }, [selectedDocId]);
+  }, []);
 
   useEffect(() => {
     // This initial mount fetch is intentionally async and does not need to be

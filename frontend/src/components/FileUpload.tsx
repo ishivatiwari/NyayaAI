@@ -41,6 +41,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
     if (e.target.files && e.target.files[0]) {
       handleFile(e.target.files[0]);
     }
+    e.target.value = '';
   };
 
   return (
