@@ -192,6 +192,16 @@ class TestSchemas:
         allowed = Settings.parse_allowed_origins("https://app.example.com, https://admin.example.com")
         assert allowed == ["https://app.example.com", "https://admin.example.com"]
 
+    def test_session_id_rejects_invalid_format(self):
+        from app.api.documents import get_session_id
+        from fastapi import HTTPException
+
+        try:
+            get_session_id("bad session")
+            assert False, "Expected invalid session ID to raise HTTPException"
+        except HTTPException as exc:
+            assert exc.status_code == 400
+
 
 class TestOfflineFallback:
     def test_backend_app_import_succeeds(self):

@@ -3,6 +3,7 @@ Documents API: upload, manage, analyze, and query legal documents.
 """
 import uuid
 import asyncio
+import re
 from pathlib import Path
 from typing import Optional, List
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks, Header
@@ -29,8 +30,16 @@ qa_agent = QAAgent()
 
 
 def get_session_id(x_session_id: Optional[str] = Header(None)) -> str:
-    """Extract or generate session ID from header."""
-    return x_session_id or str(uuid.uuid4())
+    """Extract or generate a valid session ID from the request header."""
+    if not x_session_id:
+        return str(uuid.uuid4())
+
+    session_id = x_session_id.strip()
+    if len(session_id) < 8 or len(session_id) > 128:
+        raise HTTPException(status_code=400, detail="Invalid session ID format")
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", session_id):
+        raise HTTPException(status_code=400, detail="Invalid session ID format")
+    return session_id
 
 
 async def _get_document_for_session(document_id: str, db: AsyncSession, session_id: str) -> Document:
