@@ -4,10 +4,13 @@ import React from 'react';
 import { Calendar, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface ImportantDate {
-  date: string;
-  event: string;
-  consequence: string;
+  date?: string;
+  event?: string;
+  consequence?: string;
   is_recurring?: boolean;
+  label?: string;
+  date_text?: string;
+  context?: string;
 }
 
 interface Props {
@@ -15,7 +18,14 @@ interface Props {
 }
 
 export const TimelineView: React.FC<Props> = ({ dates }) => {
-  if (!dates || dates.length === 0) {
+  const normalizedDates = (dates || []).map((d) => ({
+    date: d.date || d.date_text || 'Not specified',
+    event: d.event || d.label || 'Important date',
+    consequence: d.consequence || d.context || 'No additional context provided.',
+    is_recurring: Boolean(d.is_recurring),
+  }));
+
+  if (normalizedDates.length === 0) {
     return (
       <div className="p-8 text-center text-slate-400 bg-slate-900/60 rounded-2xl border border-slate-800">
         No specific critical dates detected in this document.
@@ -26,11 +36,11 @@ export const TimelineView: React.FC<Props> = ({ dates }) => {
   return (
     <div className="space-y-6">
       <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-        <Calendar className="w-4 h-4 text-indigo-400" /> Contractual Timeline & Deadlines ({dates.length})
+        <Calendar className="w-4 h-4 text-indigo-400" /> Contractual Timeline & Deadlines ({normalizedDates.length})
       </h3>
 
       <div className="relative border-l-2 border-slate-800 ml-4 space-y-6 pl-6">
-        {dates.map((d, idx) => (
+        {normalizedDates.map((d, idx) => (
           <div key={idx} className="relative group">
             {/* Timeline dot */}
             <div className="absolute -left-[31px] top-1.5 w-4 h-4 rounded-full bg-slate-950 border-2 border-indigo-500 group-hover:scale-125 transition-transform" />

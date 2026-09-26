@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FileText, Users, Calendar, Gavel, CheckCircle, ShieldAlert } from 'lucide-react';
+import { FileText, Users, Calendar, Gavel, CheckCircle } from 'lucide-react';
 import { AnalysisData } from '../lib/api';
 
 interface Props {

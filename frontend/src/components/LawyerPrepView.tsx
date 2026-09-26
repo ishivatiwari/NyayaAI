@@ -10,7 +10,7 @@ export const LawyerPrepView: React.FC = () => {
   const [concerns, setConcerns] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [prepPackage, setPrepPackage] = useState<LawyerPrepPackage | null>(null);
-  const [checklist, setChecklist] = useState<any | null>(null);
+  const [checklist, setChecklist] = useState<{ checklist?: Array<{ item: string; why_important?: string }> } | null>(null);
 
   useEffect(() => {
     api.listDocuments().then((res) => {
@@ -35,7 +35,7 @@ export const LawyerPrepView: React.FC = () => {
       ]);
       setPrepPackage(prepRes);
       setChecklist(checklistRes);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
     } finally {
       setLoading(false);
@@ -96,7 +96,7 @@ This package is an AI-generated organization aid, not legal advice.
           <div>
             <h2 className="text-xl font-bold text-slate-100">Lawyer Prep & Export Engine</h2>
             <p className="text-xs text-slate-400">
-              Generate structured consultation briefs, "Before You Sign" checklists, and custom negotiation points
+              Generate structured consultation briefs, “Before You Sign” checklists, and custom negotiation points
             </p>
           </div>
         </div>
@@ -226,11 +226,11 @@ This package is an AI-generated organization aid, not legal advice.
           {checklist && (
             <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
               <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <CheckSquare className="w-5 h-5 text-emerald-400" /> "Before You Sign" Final Checklist
+                <CheckSquare className="w-5 h-5 text-emerald-400" /> “Before You Sign” Final Checklist
               </h3>
 
               <div className="space-y-2">
-                {checklist.checklist?.map((item: any, idx: number) => (
+                {checklist.checklist?.map((item, idx: number) => (
                   <label key={idx} className="flex items-start gap-3 p-3 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:bg-slate-800/40 transition-colors">
                     <input type="checkbox" className="mt-1 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-900 border-slate-700" />
                     <div>

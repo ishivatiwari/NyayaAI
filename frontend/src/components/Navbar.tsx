@@ -21,7 +21,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'documents', setActi
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
+          <Link href="/" aria-label="NyayaAI home" className="flex items-center gap-3 group">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-blue-600 to-amber-500 p-0.5 shadow-lg group-hover:shadow-indigo-500/20 transition-all duration-300">
               <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
                 <Scale className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" />
@@ -38,13 +38,15 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'documents', setActi
           </Link>
 
           {/* Navigation Items */}
-          <nav className="flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-800/60">
+          <nav aria-label="Main navigation" className="flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-800/60">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
                 <button
                   key={item.id}
+                  type="button"
+                  aria-current={isActive ? 'page' : undefined}
                   onClick={() => setActiveTab && setActiveTab(item.id)}
                   className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${
                     isActive
@@ -52,7 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab = 'documents', setActi
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4" aria-hidden="true" />
                   <span>{item.label}</span>
                 </button>
               );

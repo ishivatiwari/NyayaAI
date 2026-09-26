@@ -24,6 +24,13 @@ class TestDocumentProcessor:
         assert valid is False
         assert "Unsupported" in error
 
+    def test_sanitize_filename_blocks_path_traversal(self):
+        safe_name = self.processor.sanitize_filename("../../../../tmp/evil.txt")
+        assert safe_name == "evil.txt"
+        assert ".." not in safe_name
+        assert "/" not in safe_name
+        assert "\\" not in safe_name
+
     def test_validate_file_too_large(self):
         valid, error = self.processor.validate_file("test.txt", 25 * 1024 * 1024)
         assert valid is False
@@ -179,3 +186,52 @@ class TestSchemas:
         from pydantic import ValidationError
         with pytest.raises(ValidationError):
             AskRequest(question="x" * 2001)
+
+
+class TestOfflineFallback:
+    def test_backend_app_import_succeeds(self):
+        import subprocess
+        import sys
+        from pathlib import Path
+
+        project_root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-c", "import app.main; print(app.main.app.title)"],
+            cwd=str(project_root),
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, result.stderr
+        assert "NyayaAI API" in result.stdout
+
+    def test_offline_analysis_fallback_handles_common_contract_text(self):
+        from app.services.analysis_service import DocumentAnalysisService
+
+        service = DocumentAnalysisService()
+        text = """
+        EMPLOYMENT AGREEMENT
+
+        This Agreement is entered into as of January 1, 2025 between Acme Corp and Jane Contractor.
+        The Employee shall provide services to the Company and comply with confidentiality obligations.
+        The employee may terminate this agreement with 30 days notice.
+        """
+
+        result = service._build_offline_analysis(text, "employment_agreement.txt", "demo-doc")
+
+        assert result["document_type"] == "Employment Agreement"
+        assert "summary" in result and result["summary"]
+        assert len(result["key_takeaways"]) >= 3
+        assert result["parties"]
+
+    def test_vector_store_reset_recreates_corrupted_chroma_state(self, tmp_path, monkeypatch):
+        from app.rag.vector_store import VectorStore
+        from app.config import settings
+
+        monkeypatch.setattr(settings, "CHROMA_PERSIST_DIR", str(tmp_path / "chroma_db"))
+        store = VectorStore()
+
+        store._reset_collection()
+
+        collection = store._get_collection()
+        assert collection is not None
+

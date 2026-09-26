@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar } from '../components/Navbar';
 import { DisclaimerBanner } from '../components/DisclaimerBanner';
 import { FileUpload } from '../components/FileUpload';
@@ -32,11 +32,9 @@ export default function Home() {
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [selectedDoc, setSelectedDoc] = useState<DocumentDetail | null>(null);
-  const [loadingDoc, setLoadingDoc] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
-  // Fetch document list
-  const fetchDocuments = async (autoSelectId?: string) => {
+  const fetchDocuments = useCallback(async (autoSelectId?: string) => {
     try {
       const res = await api.listDocuments();
       setDocuments(res.documents);
@@ -49,24 +47,23 @@ export default function Home() {
     } catch (err) {
       console.error('Failed to fetch documents:', err);
     }
-  };
+  }, [selectedDocId]);
 
   useEffect(() => {
-    fetchDocuments();
-  }, []);
+    // This initial mount fetch is intentionally async and does not need to be
+    // converted to a sync setter pattern for the app's data flow.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchDocuments();
+  }, [fetchDocuments]);
 
   // Fetch detail for selected document & poll while processing
   useEffect(() => {
-    if (!selectedDocId) {
-      setSelectedDoc(null);
-      return;
-    }
+    if (!selectedDocId) return;
 
     let isSubscribed = true;
-    let pollTimer: NodeJS.Timeout;
+    let pollTimer: ReturnType<typeof setTimeout> | undefined;
 
     const fetchDetail = async () => {
-      setLoadingDoc(true);
       try {
         const detail = await api.getDocument(selectedDocId);
         if (!isSubscribed) return;
@@ -84,8 +81,6 @@ export default function Home() {
         }
       } catch (err) {
         console.error('Failed to fetch document detail:', err);
-      } finally {
-        if (isSubscribed) setLoadingDoc(false);
       }
     };
 
@@ -95,7 +90,7 @@ export default function Home() {
       isSubscribed = false;
       if (pollTimer) clearTimeout(pollTimer);
     };
-  }, [selectedDocId]);
+  }, [selectedDocId, fetchDocuments]);
 
   const handleDelete = async (docId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -108,8 +103,9 @@ export default function Home() {
         setSelectedDoc(null);
       }
       await fetchDocuments();
-    } catch (err: any) {
-      alert(`Delete failed: ${err.message || 'Error deleting document'}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error deleting document';
+      alert(`Delete failed: ${message}`);
     }
   };
 
@@ -132,10 +128,13 @@ export default function Home() {
                     Your Legal Documents ({documents.length})
                   </h3>
                   <button
+                    type="button"
+                    aria-expanded={showUploadModal}
+                    aria-label={showUploadModal ? 'Hide upload panel' : 'Show upload panel'}
                     onClick={() => setShowUploadModal(!showUploadModal)}
                     className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1 transition-colors"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Upload New
+                    <Plus className="w-3.5 h-3.5" aria-hidden="true" /> Upload New
                   </button>
                 </div>
 
@@ -159,10 +158,12 @@ export default function Home() {
                       doc.status === 'uploading' || doc.status === 'extracting' || doc.status === 'analyzing';
 
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={doc.id}
+                        aria-pressed={isSelected}
                         onClick={() => setSelectedDocId(doc.id)}
-                        className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between gap-3 ${
+                        className={`w-full p-3.5 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between gap-3 ${
                           isSelected
                             ? 'bg-gradient-to-r from-indigo-950/80 to-slate-900 border-indigo-500/60 shadow-md shadow-indigo-500/10'
                             : 'bg-slate-950/50 border-slate-800/80 hover:bg-slate-800/40 hover:border-slate-700'
@@ -196,13 +197,15 @@ export default function Home() {
                         </div>
 
                         <button
+                          type="button"
                           onClick={(e) => handleDelete(doc.id, e)}
+                          aria-label={`Delete ${doc.filename}`}
                           title="Delete document"
                           className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -250,14 +253,18 @@ export default function Home() {
                       return (
                         <button
                           key={st.id}
-                          onClick={() => setSubTab(st.id as any)}
+                          type="button"
+                          role="tab"
+                          aria-selected={isActive}
+                          aria-label={st.label}
+                          onClick={() => setSubTab(st.id as 'overview' | 'clauses' | 'obligations' | 'timeline' | 'chat')}
                           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                             isActive
                               ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-600/20'
                               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
                           }`}
                         >
-                          <Icon className="w-4 h-4" />
+                          <Icon className="w-4 h-4" aria-hidden="true" />
                           <span>{st.label}</span>
                         </button>
                       );
@@ -287,7 +294,7 @@ export default function Home() {
                     )}
 
                     {subTab === 'chat' && (
-                      <QAChatView documentId={selectedDoc.id} />
+                      <QAChatView documentId={selectedDoc.id} documentStatus={selectedDoc.status} />
                     )}
                   </div>
                 </>

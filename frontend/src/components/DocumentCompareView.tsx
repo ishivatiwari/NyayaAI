@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { GitCompare, ArrowRight, AlertTriangle, ShieldCheck, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
+import { GitCompare, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import { api, DocumentSummary, ComparisonResult } from '../lib/api';
 
 export const DocumentCompareView: React.FC = () => {
@@ -36,8 +36,9 @@ export const DocumentCompareView: React.FC = () => {
     try {
       const res = await api.compareDocuments(docAId, docBId);
       setResult(res);
-    } catch (err: any) {
-      setError(err.message || 'Comparison failed.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Comparison failed.';
+      setError(message);
     } finally {
       setLoading(false);
     }

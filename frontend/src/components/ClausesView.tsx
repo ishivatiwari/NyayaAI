@@ -17,19 +17,46 @@ interface Clause {
 }
 
 interface Props {
-  clauses: Clause[];
+  clauses: Clause[] | any[];
 }
+
+const normalizeClause = (raw: any, index: number): Clause => {
+  const riskLevel = String(raw?.risk_level || raw?.attention_level || 'medium').toLowerCase();
+
+  return {
+    title: raw?.title || raw?.clause_type || raw?.heading || `Clause ${index + 1}`,
+    content: raw?.content || raw?.original_text || raw?.text || '',
+    section: raw?.section || raw?.section_name || '',
+    page: raw?.page || 1,
+    simplified_explanation:
+      raw?.simplified_explanation || raw?.plain_language || raw?.why_it_matters || 'No plain-language summary provided.',
+    risk_level: riskLevel,
+    risk_explanation: raw?.risk_explanation || raw?.why_it_matters || '',
+    missing_elements: Array.isArray(raw?.missing_elements) ? raw.missing_elements : [],
+    suggested_questions: Array.isArray(raw?.suggested_questions)
+      ? raw.suggested_questions
+      : raw?.suggested_question
+      ? [raw.suggested_question]
+      : [],
+  };
+};
 
 export const ClausesView: React.FC<Props> = ({ clauses }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [riskFilter, setRiskFilter] = useState<string>('all');
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
 
-  const filtered = clauses.filter((c) => {
+  const normalizedClauses = Array.isArray(clauses) ? clauses.map(normalizeClause) : [];
+
+  const filtered = normalizedClauses.filter((c) => {
+    const title = (c.title || '').toLowerCase();
+    const content = (c.content || '').toLowerCase();
+    const explanation = (c.simplified_explanation || '').toLowerCase();
+
     const matchesSearch =
-      c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.simplified_explanation.toLowerCase().includes(searchTerm.toLowerCase());
+      title.includes(searchTerm.toLowerCase()) ||
+      content.includes(searchTerm.toLowerCase()) ||
+      explanation.includes(searchTerm.toLowerCase());
 
     const matchesRisk =
       riskFilter === 'all' || (c.risk_level || '').toLowerCase() === riskFilter;
@@ -70,7 +97,7 @@ export const ClausesView: React.FC<Props> = ({ clauses }) => {
 
       {/* Clauses Count */}
       <div className="text-xs text-slate-400 font-medium">
-        Showing {filtered.length} of {clauses.length} extracted clauses
+        Showing {filtered.length} of {normalizedClauses.length} extracted clauses
       </div>
 
       {/* Clause Cards */}
@@ -175,7 +202,7 @@ export const ClausesView: React.FC<Props> = ({ clauses }) => {
                             key={i}
                             className="text-xs bg-slate-800 text-slate-300 border border-slate-700/60 px-2.5 py-1 rounded-lg"
                           >
-                            "{q}"
+                            {q}
                           </span>
                         ))}
                       </div>

@@ -6,7 +6,7 @@ import os
 import re
 import uuid
 from pathlib import Path
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 import structlog
 
 from app.config import settings
@@ -71,15 +71,51 @@ class DocumentProcessor:
         self.upload_dir = Path(settings.UPLOAD_DIR)
         self.upload_dir.mkdir(parents=True, exist_ok=True)
 
-    def validate_file(self, filename: str, file_size: int) -> Tuple[bool, str]:
-        """Validate file type and size."""
-        ext = Path(filename).suffix.lower().lstrip(".")
+    def sanitize_filename(self, filename: str) -> str:
+        """Return a safe filename that cannot escape the upload directory."""
+        name = Path((filename or "document.txt").strip()).name
+        name = re.sub(r"[^A-Za-z0-9._-]", "_", name)
+        name = name.strip("._ ") or "document.txt"
+        ext = Path(name).suffix.lower()
+        if ext and ext.lstrip(".") not in settings.ALLOWED_EXTENSIONS:
+            name = f"{Path(name).stem or 'document'}{ext or '.txt'}"
+        return name
+
+    def validate_file(self, filename: str, file_size: int, mime_type: Optional[str] = None) -> Tuple[bool, str]:
+        """Validate file type, MIME type, and size."""
+        safe_filename = self.sanitize_filename(filename)
+        ext = Path(safe_filename).suffix.lower().lstrip(".")
         if ext not in settings.ALLOWED_EXTENSIONS:
             return False, f"Unsupported file type: .{ext}. Allowed: {', '.join(settings.ALLOWED_EXTENSIONS)}"
+
+        allowed_mimetypes = {
+            "pdf": {"application/pdf"},
+            "docx": {"application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
+            "txt": {"text/plain", "application/octet-stream"},
+        }
+        if mime_type and ext in allowed_mimetypes and mime_type.lower() not in allowed_mimetypes[ext]:
+            return False, f"MIME type mismatch for .{ext}. Received: {mime_type}"
+
         max_bytes = settings.MAX_FILE_SIZE_MB * 1024 * 1024
+        if file_size <= 0:
+            return False, "Uploaded file is empty."
         if file_size > max_bytes:
             return False, f"File too large: {file_size // 1024 // 1024}MB. Maximum: {settings.MAX_FILE_SIZE_MB}MB"
         return True, ""
+
+    def _sanitize_text(self, text: str) -> str:
+        """Strip control characters and log suspicious prompt-injection patterns."""
+        cleaned = text.replace("\x00", "").replace("\r", "\n")
+        lowered = cleaned.lower()
+        if any(pattern in lowered for pattern in [
+            "ignore previous instructions",
+            "ignore all previous",
+            "system prompt",
+            "reveal your prompt",
+            "disregard your instructions",
+        ]):
+            logger.warning("Suspicious document text detected", marker="possible_prompt_injection")
+        return cleaned.strip()
 
     def extract_text(self, file_path: str, filename: str) -> Dict[str, Any]:
         """
@@ -113,11 +149,12 @@ class DocumentProcessor:
 
         for page_num in range(len(doc)):
             page = doc[page_num]
-            text = page.get_text("text")
+            text = self._sanitize_text(page.get_text("text"))
             pages.append({"page_num": page_num + 1, "text": text})
             full_text += f"\n\n--- PAGE {page_num + 1} ---\n\n{text}"
 
         doc.close()
+        full_text = self._sanitize_text(full_text)
         sections = self._detect_sections(full_text)
 
         return {
@@ -142,7 +179,7 @@ class DocumentProcessor:
         sections_found = []
 
         for para in doc.paragraphs:
-            text = para.text.strip()
+            text = self._sanitize_text(para.text.strip())
             if not text:
                 continue
 
@@ -172,7 +209,7 @@ class DocumentProcessor:
     def _extract_txt(self, file_path: str) -> Dict[str, Any]:
         """Extract text from plain TXT file."""
         with open(file_path, "r", encoding="utf-8", errors="replace") as f:
-            full_text = f.read()
+            full_text = self._sanitize_text(f.read())
 
         lines = full_text.split("\n")
         words_per_page = 400

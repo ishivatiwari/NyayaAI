@@ -1,7 +1,7 @@
 """
 Pydantic schemas for API request/response validation.
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from enum import Enum
@@ -129,6 +129,23 @@ class DocumentAnalysis(BaseModel):
 class AskRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=2000)
     conversation_id: Optional[str] = None
+
+    @field_validator("question")
+    @classmethod
+    def validate_question(cls, value: str) -> str:
+        cleaned = " ".join(value.strip().split())
+        if not cleaned:
+            raise ValueError("Question must not be empty")
+        bad_patterns = [
+            "ignore previous instructions",
+            "ignore all previous",
+            "reveal your system prompt",
+            "disregard your instructions",
+        ]
+        lower = cleaned.lower()
+        if any(pattern in lower for pattern in bad_patterns):
+            raise ValueError("Question contains invalid instruction patterns")
+        return cleaned[:2000]
 
 
 class QASource(BaseModel):

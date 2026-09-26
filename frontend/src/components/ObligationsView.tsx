@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { UserCheck, Clock, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { UserCheck, Clock, AlertTriangle } from 'lucide-react';
 
 interface Obligation {
   who: string;
@@ -13,11 +13,48 @@ interface Obligation {
 }
 
 interface Props {
-  obligations: Obligation[];
+  obligations: Obligation[] | any[];
 }
 
+const normalizeObligations = (raw: any): Obligation[] => {
+  if (!Array.isArray(raw)) return [];
+
+  const flattened: Obligation[] = [];
+
+  raw.forEach((entry) => {
+    if (Array.isArray(entry?.obligations)) {
+      entry.obligations.forEach((ob: any) => {
+        flattened.push({
+          who: ob?.party || entry?.party || 'Unknown party',
+          must_do: ob?.description || ob?.must_do || 'No obligation description provided.',
+          by_when: ob?.deadline || ob?.by_when || ob?.date || '',
+          consequence_if_missed: ob?.consequence_if_missed || ob?.consequence || '',
+          is_conditional: Boolean(ob?.condition || ob?.is_conditional),
+          condition: ob?.condition || '',
+        });
+      });
+      return;
+    }
+
+    if (entry && typeof entry === 'object') {
+      flattened.push({
+        who: entry.who || entry.party || 'Unknown party',
+        must_do: entry.must_do || entry.description || 'No obligation description provided.',
+        by_when: entry.by_when || entry.deadline || entry.date || '',
+        consequence_if_missed: entry.consequence_if_missed || entry.consequence || '',
+        is_conditional: Boolean(entry.is_conditional || entry.condition),
+        condition: entry.condition || '',
+      });
+    }
+  });
+
+  return flattened;
+};
+
 export const ObligationsView: React.FC<Props> = ({ obligations }) => {
-  if (!obligations || obligations.length === 0) {
+  const normalized = normalizeObligations(obligations);
+
+  if (!normalized.length) {
     return (
       <div className="p-8 text-center text-slate-400 bg-slate-900/60 rounded-2xl border border-slate-800">
         No specific obligations extracted for this document.
@@ -29,17 +66,16 @@ export const ObligationsView: React.FC<Props> = ({ obligations }) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-          <UserCheck className="w-4 h-4 text-indigo-400" /> Key Obligations & Duties Matrix ({obligations.length})
+          <UserCheck className="w-4 h-4 text-indigo-400" /> Key Obligations & Duties Matrix ({normalized.length})
         </h3>
       </div>
 
       <div className="grid grid-cols-1 gap-3">
-        {obligations.map((ob, idx) => (
+        {normalized.map((ob, idx) => (
           <div
             key={idx}
             className="bg-slate-900/80 border border-slate-800 hover:border-indigo-500/40 rounded-2xl p-4 shadow-sm space-y-3 transition-all"
           >
-            {/* Top row: Who & Condition */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-1 rounded-lg bg-indigo-950 text-indigo-300 font-bold text-xs border border-indigo-700/50">
@@ -59,7 +95,6 @@ export const ObligationsView: React.FC<Props> = ({ obligations }) => {
               )}
             </div>
 
-            {/* Action / Must Do */}
             <div>
               <p className="text-sm font-medium text-slate-100 leading-relaxed">{ob.must_do}</p>
               {ob.condition && (
@@ -69,7 +104,6 @@ export const ObligationsView: React.FC<Props> = ({ obligations }) => {
               )}
             </div>
 
-            {/* Consequence */}
             {ob.consequence_if_missed && (
               <div className="p-2.5 bg-red-950/20 border border-red-900/30 rounded-xl text-xs text-red-300 flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />

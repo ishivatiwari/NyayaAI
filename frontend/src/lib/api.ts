@@ -135,6 +135,43 @@ export interface ComparisonResult {
   recommendation: string;
 }
 
+const normalizeComparisonResult = (raw: any): ComparisonResult => {
+  const keyDifferences = Array.isArray(raw?.differences)
+    ? raw.differences.map((diff: any) => ({
+        category: diff?.category || 'General',
+        doc_a_version: diff?.doc_a_text || 'No text provided',
+        doc_b_version: diff?.doc_b_text || 'No text provided',
+        change_type: (diff?.difference_type || 'modified') as ComparisonResult['key_differences'][number]['change_type'],
+        impact_level: (diff?.impact_level || 'medium') as ComparisonResult['key_differences'][number]['impact_level'],
+        explanation: diff?.description || diff?.potential_implication || 'No impact description provided.',
+      }))
+    : [];
+
+  const overallSummary = Array.isArray(raw?.executive_summary)
+    ? raw.executive_summary.join(' ')
+    : (raw?.overall_summary || 'No comparison summary available.');
+
+  return {
+    doc_a: {
+      id: raw?.doc_a_id || '',
+      name: raw?.doc_a_name || 'Document A',
+    },
+    doc_b: {
+      id: raw?.doc_b_id || '',
+      name: raw?.doc_b_name || 'Document B',
+    },
+    overall_summary: overallSummary,
+    key_differences: keyDifferences,
+    risk_comparison: {
+      doc_a_risk: raw?.risk_comparison?.doc_a_risk || 'Unknown',
+      doc_b_risk: raw?.risk_comparison?.doc_b_risk || 'Unknown',
+      safer_option: raw?.risk_comparison?.safer_option,
+      reasoning: raw?.risk_comparison?.reasoning || raw?.recommendation || 'No risk comparison available.',
+    },
+    recommendation: raw?.recommendation || raw?.risk_comparison?.safer_option || 'Review both documents carefully before signing.',
+  };
+};
+
 export interface LawyerPrepPackage {
   document_summary: string;
   key_concerns_for_lawyer: string[];
@@ -220,7 +257,8 @@ export const api = {
       const err = await res.json().catch(() => ({ detail: 'Comparison failed' }));
       throw new Error(err.detail || 'Comparison failed');
     }
-    return res.json();
+    const raw = await res.json();
+    return normalizeComparisonResult(raw);
   },
 
   // Generate Lawyer Prep Package
@@ -234,8 +272,7 @@ export const api = {
     return res.json();
   },
 
-  // Generate Sign Checklist
-  async generateChecklist(documentId: string): Promise<any> {
+async generateChecklist(documentId: string): Promise<{ checklist?: Array<{ item: string; why_important?: string }> }> {
     const res = await fetch(`${API_BASE}/lawyer-prep/checklist`, {
       method: 'POST',
       headers: getHeaders(),

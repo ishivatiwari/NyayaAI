@@ -177,20 +177,27 @@ Respond with JSON:
             dates = []
 
             for d in dates_raw:
+                date_value = d.get("date_text") or d.get("date") or ""
+                event_label = d.get("label") or d.get("event") or "Important Date"
+                context_text = d.get("context") or d.get("consequence") or "No additional context provided."
                 date_item = {
                     "id": str(uuid.uuid4()),
-                    "label": d.get("label", "Important Date"),
-                    "date_text": d.get("date_text", ""),
+                    "label": event_label,
+                    "date_text": date_value,
+                    "date": date_value,
+                    "event": event_label,
                     "date_value": None,
-                    "context": d.get("context", ""),
+                    "context": context_text,
+                    "consequence": context_text,
                     "page": d.get("page", 1),
                     "section": d.get("section", ""),
+                    "is_recurring": bool(d.get("is_recurring", False)),
                     "source": {
                         "document_id": document_id,
                         "document_name": "",
                         "page": d.get("page", 1),
                         "section": d.get("section", ""),
-                        "text": d.get("context", ""),
+                        "text": context_text,
                     },
                 }
                 dates.append(date_item)

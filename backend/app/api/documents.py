@@ -33,6 +33,16 @@ def get_session_id(x_session_id: Optional[str] = Header(None)) -> str:
     return x_session_id or str(uuid.uuid4())
 
 
+async def _get_document_for_session(document_id: str, db: AsyncSession, session_id: str) -> Document:
+    result = await db.execute(select(Document).where(Document.id == document_id))
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    if doc.session_id != session_id:
+        raise HTTPException(status_code=403, detail="You do not have access to this document")
+    return doc
+
+
 async def _run_analysis(document_id: str):
     """Background task wrapper for document analysis using a fresh session."""
     async with AsyncSessionLocal() as db:
@@ -62,15 +72,14 @@ async def upload_document(
 ):
     """Upload a legal document for processing and analysis."""
 
-    # Validate file
     content = await file.read()
-    valid, error = processor.validate_file(file.filename or "file.txt", len(content))
+    safe_filename = processor.sanitize_filename(file.filename or "document.txt")
+    valid, error = processor.validate_file(safe_filename, len(content), file.content_type)
     if not valid:
         raise HTTPException(status_code=400, detail=error)
 
-    # Save file
     try:
-        file_path = await analysis_service.save_upload(content, file.filename)
+        file_path = await analysis_service.save_upload(content, safe_filename)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"File save failed: {str(e)}")
 
@@ -80,7 +89,7 @@ async def upload_document(
         id=doc_id,
         session_id=session_id,
         filename=Path(file_path).name,
-        original_filename=file.filename or "document",
+        original_filename=safe_filename,
         file_path=file_path,
         file_size=len(content),
         mime_type=file.content_type,
@@ -143,13 +152,10 @@ async def list_documents(
 async def get_document(
     document_id: str,
     db: AsyncSession = Depends(get_db),
+    session_id: str = Depends(get_session_id),
 ):
     """Get document details and analysis."""
-    result = await db.execute(select(Document).where(Document.id == document_id))
-    doc = result.scalar_one_or_none()
-
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
+    doc = await _get_document_for_session(document_id, db, session_id)
 
     analysis_result = await db.execute(
         select(Analysis).where(Analysis.document_id == document_id)
@@ -188,8 +194,9 @@ async def get_document(
 # ─── Get Clauses ──────────────────────────────────────────────────────────────
 
 @router.get("/{document_id}/clauses")
-async def get_clauses(document_id: str, db: AsyncSession = Depends(get_db)):
+async def get_clauses(document_id: str, db: AsyncSession = Depends(get_db), session_id: str = Depends(get_session_id)):
     """Get extracted clauses for a document."""
+    await _get_document_for_session(document_id, db, session_id)
     analysis_result = await db.execute(
         select(Analysis).where(Analysis.document_id == document_id)
     )
@@ -204,8 +211,9 @@ async def get_clauses(document_id: str, db: AsyncSession = Depends(get_db)):
 # ─── Get Obligations ──────────────────────────────────────────────────────────
 
 @router.get("/{document_id}/obligations")
-async def get_obligations(document_id: str, db: AsyncSession = Depends(get_db)):
+async def get_obligations(document_id: str, db: AsyncSession = Depends(get_db), session_id: str = Depends(get_session_id)):
     """Get extracted obligations for a document."""
+    await _get_document_for_session(document_id, db, session_id)
     analysis_result = await db.execute(
         select(Analysis).where(Analysis.document_id == document_id)
     )
@@ -220,8 +228,9 @@ async def get_obligations(document_id: str, db: AsyncSession = Depends(get_db)):
 # ─── Get Timeline ─────────────────────────────────────────────────────────────
 
 @router.get("/{document_id}/timeline")
-async def get_timeline(document_id: str, db: AsyncSession = Depends(get_db)):
+async def get_timeline(document_id: str, db: AsyncSession = Depends(get_db), session_id: str = Depends(get_session_id)):
     """Get important dates / timeline for a document."""
+    await _get_document_for_session(document_id, db, session_id)
     analysis_result = await db.execute(
         select(Analysis).where(Analysis.document_id == document_id)
     )
@@ -311,13 +320,10 @@ async def ask_document(
 async def delete_document(
     document_id: str,
     db: AsyncSession = Depends(get_db),
+    session_id: str = Depends(get_session_id),
 ):
     """Securely delete a document and all associated data."""
-    result = await db.execute(select(Document).where(Document.id == document_id))
-    doc = result.scalar_one_or_none()
-
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
+    doc = await _get_document_for_session(document_id, db, session_id)
 
     # Delete physical files and Chroma vector store embeddings
     try:
@@ -342,13 +348,10 @@ async def delete_document(
 async def get_suggested_questions(
     document_id: str,
     db: AsyncSession = Depends(get_db),
+    session_id: str = Depends(get_session_id),
 ):
     """Get suggested questions based on document type."""
-    result = await db.execute(select(Document).where(Document.id == document_id))
-    doc = result.scalar_one_or_none()
-
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
+    doc = await _get_document_for_session(document_id, db, session_id)
 
     doc_type = (doc.document_type or "").lower()
 

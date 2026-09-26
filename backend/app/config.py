@@ -1,6 +1,7 @@
 """
 Application configuration via environment variables.
 """
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 from typing import List, Optional
 
@@ -8,11 +9,23 @@ from typing import List, Optional
 class Settings(BaseSettings):
     # Application
     ENVIRONMENT: str = "development"
-    DEBUG: bool = True
+    DEBUG: bool = False
     SECRET_KEY: str = "nyayaai-dev-secret-change-in-production"
 
     # CORS
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
+    ALLOWED_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+    ]
+
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def parse_allowed_origins(cls, value):
+        if isinstance(value, str):
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return value
 
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./nyayaai.db"

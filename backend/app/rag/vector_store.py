@@ -1,7 +1,9 @@
 """
 Vector store using ChromaDB for semantic document retrieval.
 """
+import shutil
 import uuid
+from pathlib import Path
 from typing import List, Dict, Any, Optional
 import structlog
 
@@ -30,13 +32,49 @@ class VectorStore:
             )
         return self._client
 
+    def _reset_collection(self):
+        """Clear the persisted Chroma state and recreate it when the local sqlite metadata is corrupted."""
+        self._collection = None
+
+        try:
+            if self._client is not None:
+                self._client.reset()
+                logger.warning("Reset Chroma client state to recover from corrupted collection metadata")
+                return self._get_collection()
+        except Exception as e:
+            logger.warning("Chroma client reset failed, falling back to deleting persisted state", error=str(e))
+
+        self._client = None
+        persist_dir = Path(settings.CHROMA_PERSIST_DIR).resolve()
+        persist_dir.mkdir(parents=True, exist_ok=True)
+
+        for child in persist_dir.iterdir():
+            try:
+                if child.is_dir():
+                    shutil.rmtree(child)
+                else:
+                    child.unlink()
+            except Exception as e:
+                logger.warning("Failed to clear Chroma persisted state", path=str(child), error=str(e))
+
+        logger.warning("Reset Chroma persisted state to recover from corrupted collection metadata")
+        return self._get_collection()
+
     def _get_collection(self):
         if self._collection is None:
             client = self._get_client()
-            self._collection = client.get_or_create_collection(
-                name=settings.CHROMA_COLLECTION_NAME,
-                metadata={"hnsw:space": "cosine"},
-            )
+            try:
+                self._collection = client.get_or_create_collection(
+                    name=settings.CHROMA_COLLECTION_NAME,
+                    metadata={"hnsw:space": "cosine"},
+                )
+            except Exception as e:
+                logger.warning("Chroma collection creation failed, resetting store", error=str(e))
+                self._reset_collection()
+                self._collection = self._get_client().get_or_create_collection(
+                    name=settings.CHROMA_COLLECTION_NAME,
+                    metadata={"hnsw:space": "cosine"},
+                )
         return self._collection
 
     def _get_embedding_provider(self):
@@ -49,11 +87,9 @@ class VectorStore:
         if not chunks:
             return
 
-        collection = self._get_collection()
         provider = self._get_embedding_provider()
-
-        # Batch processing
         batch_size = 50
+
         for i in range(0, len(chunks), batch_size):
             batch = chunks[i : i + batch_size]
             texts = [c.text for c in batch]
@@ -71,12 +107,24 @@ class VectorStore:
                 for c in batch
             ]
 
-            collection.add(
-                ids=ids,
-                embeddings=embeddings,
-                documents=texts,
-                metadatas=metadatas,
-            )
+            try:
+                collection = self._get_collection()
+                collection.add(
+                    ids=ids,
+                    embeddings=embeddings,
+                    documents=texts,
+                    metadatas=metadatas,
+                )
+            except Exception as e:
+                logger.warning("Chroma add failed, resetting persisted store", error=str(e))
+                self._reset_collection()
+                collection = self._get_collection()
+                collection.add(
+                    ids=ids,
+                    embeddings=embeddings,
+                    documents=texts,
+                    metadatas=metadatas,
+                )
 
         logger.info(
             "Chunks added to vector store",

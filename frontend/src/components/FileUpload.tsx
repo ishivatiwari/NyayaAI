@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Upload, FileText, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, Loader2, AlertCircle } from 'lucide-react';
 import { api } from '../lib/api';
 
 interface FileUploadProps {
@@ -21,8 +21,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
     try {
       const res = await api.uploadDocument(file);
       onUploadSuccess(res.id);
-    } catch (err: any) {
-      setError(err.message || 'Upload failed. Please try again.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Upload failed. Please try again.';
+      setError(message);
     } finally {
       setUploading(false);
     }
@@ -45,13 +46,25 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
   return (
     <div className="w-full">
       <div
+        role="button"
+        tabIndex={uploading ? -1 : 0}
+        aria-label="Upload a legal document"
+        aria-busy={uploading}
+        aria-describedby={error ? 'upload-error-message' : undefined}
         onDragOver={(e) => {
           e.preventDefault();
           setIsDragging(true);
         }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !uploading && fileInputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (uploading) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
         className={`relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 ${
           isDragging
             ? 'border-indigo-500 bg-indigo-950/30 scale-[1.01]'
@@ -62,6 +75,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
           ref={fileInputRef}
           type="file"
           accept=".pdf,.docx,.txt"
+          aria-label="Choose a legal document to upload"
           onChange={handleChange}
           className="hidden"
         />
@@ -96,8 +110,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
       </div>
 
       {error && (
-        <div className="mt-3 p-3 bg-red-950/50 border border-red-800/50 rounded-xl text-red-300 text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
+        <div id="upload-error-message" aria-live="polite" className="mt-3 p-3 bg-red-950/50 border border-red-800/50 rounded-xl text-red-300 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
           <span>{error}</span>
         </div>
       )}

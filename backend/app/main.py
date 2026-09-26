@@ -9,6 +9,7 @@ import structlog
 
 from app.config import settings
 from app.database import init_db
+from app.rag.vector_store import get_vector_store
 from app.api import documents, compare, workspaces, lawyer_prep, health
 
 logger = structlog.get_logger()
@@ -18,6 +19,11 @@ logger = structlog.get_logger()
 async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown."""
     logger.info("NyayaAI starting up", version="1.0.0", env=settings.ENVIRONMENT)
+    try:
+        store = get_vector_store()
+        store._reset_collection()
+    except Exception as exc:
+        logger.warning("Vector store reset failed during startup", error=str(exc))
     await init_db()
     yield
     logger.info("NyayaAI shutting down")
@@ -32,13 +38,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS
+# CORS: allow localhost in development, but keep production defaults strict and
+# configurable via environment variables.
+allow_methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] if settings.ENVIRONMENT == "production" else ["*"]
+allow_headers = ["Authorization", "Content-Type", "X-Session-ID"] if settings.ENVIRONMENT == "production" else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=allow_methods,
+    allow_headers=allow_headers,
 )
 
 

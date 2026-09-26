@@ -15,9 +15,10 @@ interface Message {
 
 interface Props {
   documentId: string;
+  documentStatus?: string;
 }
 
-export const QAChatView: React.FC<Props> = ({ documentId }) => {
+export const QAChatView: React.FC<Props> = ({ documentId, documentStatus }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -29,6 +30,7 @@ export const QAChatView: React.FC<Props> = ({ documentId }) => {
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [conversationId, setConversationId] = useState<string | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isReady = documentStatus === 'ready';
 
   useEffect(() => {
     // Fetch suggested questions for document
@@ -64,12 +66,13 @@ export const QAChatView: React.FC<Props> = ({ documentId }) => {
           suggestedFollowups: res.suggested_followups,
         },
       ]);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unable to process question.';
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: `Sorry, I encountered an error: ${err.message || 'Unable to process question.'}`,
+          content: `Sorry, I encountered an error: ${message}`,
         },
       ]);
     } finally {
@@ -96,7 +99,7 @@ export const QAChatView: React.FC<Props> = ({ documentId }) => {
       </div>
 
       {/* Messages List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4" aria-live="polite" role="log" aria-label="Legal document Q and A conversation">
         {messages.map((msg, idx) => (
           <div
             key={idx}
@@ -150,7 +153,7 @@ export const QAChatView: React.FC<Props> = ({ documentId }) => {
                           <span className="font-semibold text-slate-300">{src.document_name}</span>
                           {src.page && <span>Page {src.page}</span>}
                         </div>
-                        <p className="text-slate-300 italic font-mono text-[11px]">"{src.text}"</p>
+                        <p className="text-slate-300 italic font-mono text-[11px]">{src.text}</p>
                       </div>
                     ))}
                   </div>
@@ -163,6 +166,8 @@ export const QAChatView: React.FC<Props> = ({ documentId }) => {
                   {msg.suggestedFollowups.map((sf, i) => (
                     <button
                       key={i}
+                      type="button"
+                      aria-label={`Ask follow-up: ${sf}`}
                       onClick={() => handleSend(sf)}
                       className="text-xs bg-slate-900 hover:bg-slate-800 text-indigo-300 border border-indigo-900/50 px-2.5 py-1 rounded-lg transition-colors text-left"
                     >
@@ -190,14 +195,22 @@ export const QAChatView: React.FC<Props> = ({ documentId }) => {
         <div ref={messagesEndRef} />
       </div>
 
+      {!isReady && (
+        <div className="p-3 bg-amber-950/30 border-t border-amber-800/40 text-amber-200 text-xs">
+          Document processing is still in progress. The Q&A assistant will be available once the document status reaches <strong>ready</strong>.
+        </div>
+      )}
+
       {/* Suggested Prompt Chips */}
-      {suggestedQuestions.length > 0 && messages.length <= 3 && (
+      {isReady && suggestedQuestions.length > 0 && messages.length <= 3 && (
         <div className="p-3 bg-slate-950/60 border-t border-slate-800 flex items-center gap-2 overflow-x-auto">
           <HelpCircle className="w-4 h-4 text-indigo-400 shrink-0" />
           <span className="text-xs text-slate-400 shrink-0">Suggested:</span>
           {suggestedQuestions.slice(0, 4).map((q, i) => (
             <button
               key={i}
+              type="button"
+              aria-label={`Ask suggested question: ${q}`}
               onClick={() => handleSend(q)}
               className="text-xs bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 px-2.5 py-1 rounded-full shrink-0 transition-colors"
             >
@@ -208,23 +221,27 @@ export const QAChatView: React.FC<Props> = ({ documentId }) => {
       )}
 
       {/* Input Bar */}
-      <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center gap-2">
+      <form onSubmit={(e) => { e.preventDefault(); if (isReady) handleSend(); }} className="p-3 bg-slate-950 border-t border-slate-800 flex items-center gap-2">
+        <label htmlFor="document-question-input" className="sr-only">Ask a question about the uploaded document</label>
         <input
+          id="document-question-input"
           type="text"
-          placeholder="Ask a question about your document..."
+          aria-label="Ask a question about the uploaded document"
+          placeholder={isReady ? 'Ask a question about your document...' : 'Waiting for document to finish processing...'}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+          disabled={!isReady}
+          className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         />
         <button
-          onClick={() => handleSend()}
-          disabled={loading || !input.trim()}
+          type="submit"
+          aria-label="Send question"
+          disabled={!isReady || loading || !input.trim()}
           className="p-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-indigo-600/20 transition-all"
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-4 h-4" aria-hidden="true" />
         </button>
-      </div>
+      </form>
     </div>
   );
 };
