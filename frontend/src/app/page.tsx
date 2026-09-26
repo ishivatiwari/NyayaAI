@@ -109,11 +109,24 @@ export default function Home() {
     }
   };
 
+  const handleDocumentKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, docId: string) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setSelectedDocId(docId);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-indigo-600 focus:px-4 focus:py-2 focus:text-white"
+      >
+        Skip to main content
+      </a>
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Top Disclaimer Banner */}
         <DisclaimerBanner />
 
@@ -158,11 +171,14 @@ export default function Home() {
                       doc.status === 'uploading' || doc.status === 'extracting' || doc.status === 'analyzing';
 
                     return (
-                      <button
-                        type="button"
+                      <div
                         key={doc.id}
+                        role="button"
+                        tabIndex={0}
                         aria-pressed={isSelected}
+                        aria-label={`Select document ${doc.filename}`}
                         onClick={() => setSelectedDocId(doc.id)}
+                        onKeyDown={(event) => handleDocumentKeyDown(event, doc.id)}
                         className={`w-full p-3.5 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between gap-3 ${
                           isSelected
                             ? 'bg-gradient-to-r from-indigo-950/80 to-slate-900 border-indigo-500/60 shadow-md shadow-indigo-500/10'
@@ -201,11 +217,11 @@ export default function Home() {
                           onClick={(e) => handleDelete(doc.id, e)}
                           aria-label={`Delete ${doc.filename}`}
                           title="Delete document"
-                          className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+                          className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                         >
                           <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>

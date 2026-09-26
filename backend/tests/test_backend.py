@@ -187,6 +187,11 @@ class TestSchemas:
         with pytest.raises(ValidationError):
             AskRequest(question="x" * 2001)
 
+    def test_allowed_origins_parse_csv_string(self):
+        from app.config import Settings
+        allowed = Settings.parse_allowed_origins("https://app.example.com, https://admin.example.com")
+        assert allowed == ["https://app.example.com", "https://admin.example.com"]
+
 
 class TestOfflineFallback:
     def test_backend_app_import_succeeds(self):
