@@ -256,7 +256,11 @@ export default function Home() {
                   )}
 
                   {/* Sub-tab Navigation */}
-                  <div className="flex items-center gap-1 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-800 overflow-x-auto">
+                  <div
+                    role="tablist"
+                    aria-label="Document analysis sections"
+                    className="flex items-center gap-1 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-800 overflow-x-auto"
+                  >
                     {[
                       { id: 'overview', label: 'Overview & Summary', icon: FileText },
                       { id: 'clauses', label: `Clauses (${selectedDoc.analysis?.clauses?.length || 0})`, icon: FileCode },
@@ -271,7 +275,10 @@ export default function Home() {
                           key={st.id}
                           type="button"
                           role="tab"
+                          id={`tab-${st.id}`}
+                          aria-controls={`panel-${st.id}`}
                           aria-selected={isActive}
+                          tabIndex={isActive ? 0 : -1}
                           aria-label={st.label}
                           onClick={() => setSubTab(st.id as 'overview' | 'clauses' | 'obligations' | 'timeline' | 'chat')}
                           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
@@ -288,7 +295,13 @@ export default function Home() {
                   </div>
 
                   {/* Sub-tab Content */}
-                  <div>
+                  <div
+                    role="tabpanel"
+                    id={`panel-${subTab}`}
+                    aria-labelledby={`tab-${subTab}`}
+                    tabIndex={0}
+                    className="focus:outline-none"
+                  >
                     {subTab === 'overview' && (
                       <DocumentOverviewCard
                         filename={selectedDoc.filename}
